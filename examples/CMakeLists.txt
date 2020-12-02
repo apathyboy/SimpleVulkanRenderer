@@ -1,2 +1,3 @@
+add_subdirectory(simple_context_app)
 add_subdirectory(simple_win32_window)
 add_subdirectory(vk_info)
