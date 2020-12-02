@@ -5,7 +5,12 @@ project(SimpleVulkanRenderer VERSION 0.0.1)
 find_package(fmt CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 
-add_library(svr include/svr/svr.hpp src/svr.cpp)
+add_library(
+    svr
+    include/svr/svr.hpp
+    include/svr/vulkan_simple_context.hpp
+    src/svr.cpp
+    src/vulkan_simple_context.cpp)
 
 add_library(esb::svr ALIAS svr)
 
@@ -17,6 +22,8 @@ target_include_directories(
 
 target_compile_features(svr PUBLIC cxx_std_20)
 target_compile_options(svr PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-W4 -WX>)
+
+target_link_libraries(svr PUBLIC Vulkan::Vulkan)
 
 add_subdirectory(examples)
 add_subdirectory(tests)

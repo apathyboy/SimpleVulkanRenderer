@@ -1,7 +1,10 @@
 
 #include <Windows.h>
 
+#include <svr/vulkan_simple_context.hpp>
+
 #include <cstdint>
+#include <memory>
 
 constexpr char window_title[] = "Simple Context App";
 constexpr char class_name[]   = "Simple Context App Window Class";
@@ -11,6 +14,8 @@ bool is_minimized = false;
 
 int32_t client_area_width  = 1280;
 int32_t client_area_height = 720;
+
+std::unique_ptr<svr::vulkan_simple_context> context;
 
 LRESULT CALLBACK
 window_proc(_In_ HWND hwnd, _In_ UINT msg, _In_ WPARAM wparam, _In_ LPARAM lparam);
@@ -65,6 +70,7 @@ int WINAPI WinMain(
     ShowWindow(hwnd, show_cmd);
 
     // application specific setup
+    context = std::make_unique<svr::vulkan_simple_context>();
 
     while (is_running) {
         // update game/simulation
