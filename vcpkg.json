@@ -2,6 +2,7 @@
     "name": "simple-vulkan-renderer",
     "version-string": "0.0.1",
     "dependencies": [
-        "catch2"
+        "catch2",
+        "fmt"
     ]
 }
