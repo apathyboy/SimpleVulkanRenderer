@@ -1,1 +1,2 @@
+add_subdirectory(simple_win32_window)
 add_subdirectory(vk_info)
