@@ -25,6 +25,27 @@ bool has_required_extensions(
     });
 }
 
+uint32_t find_queue_family_idx(vk::PhysicalDevice device, vk::SurfaceKHR surface)
+{
+    std::optional<uint32_t> queue_family_idx;
+
+    auto families = device.getQueueFamilyProperties();
+
+    for (uint32_t idx = 0; idx < families.size(); ++idx) {
+        const auto& family = families[idx];
+
+        if (!(family.queueFlags & vk::QueueFlagBits::eGraphics))
+            continue;
+
+        if (!device.getSurfaceSupportKHR(idx, surface))
+            continue;
+
+        queue_family_idx = idx;
+    }
+
+    return queue_family_idx.value();
+}
+
 vulkan_simple_context::vulkan_simple_context()
 {
     if (vk::enumerateInstanceVersion() < min_vulkan_api_version_) {
@@ -59,6 +80,7 @@ vulkan_simple_context::vulkan_simple_context()
     // Create context
     create_instance();
     create_surface();
+    select_physical_device();
 }
 
 void vulkan_simple_context::create_instance()
@@ -80,6 +102,13 @@ void vulkan_simple_context::create_surface()
 
     surface_ = instance_->createWin32SurfaceKHRUnique(create_info);
 #endif
+}
+
+void vulkan_simple_context::select_physical_device()
+{
+    auto device = instance_->enumeratePhysicalDevices().front();
+
+    physical_device_ = {device, find_queue_family_idx(device, surface_.get())};
 }
 
 } // namespace svr
