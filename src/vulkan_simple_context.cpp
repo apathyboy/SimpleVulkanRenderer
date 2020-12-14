@@ -81,6 +81,7 @@ vulkan_simple_context::vulkan_simple_context()
     create_instance();
     create_surface();
     select_physical_device();
+    create_logical_device();
 }
 
 void vulkan_simple_context::create_instance()
@@ -102,6 +103,21 @@ void vulkan_simple_context::create_surface()
 
     surface_ = instance_->createWin32SurfaceKHRUnique(create_info);
 #endif
+}
+
+void vulkan_simple_context::create_logical_device()
+{
+    vk::DeviceQueueCreateInfo queue_create_info = {
+        {},
+        physical_device_.queue_family_idx,
+        std::array{1.f}};
+
+    vk::DeviceCreateInfo create_info =
+        {{}, queue_create_info, {}, enabled_device_extensions_, &device_features_};
+
+    device_ = physical_device_.handle.createDeviceUnique(create_info);
+
+    device_queue_ = device_->getQueue(physical_device_.queue_family_idx, 0);
 }
 
 void vulkan_simple_context::select_physical_device()
