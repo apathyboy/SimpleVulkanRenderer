@@ -20,6 +20,8 @@ target_include_directories(
            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/svr ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+target_compile_definitions(svr
+                           PRIVATE $<$<CXX_COMPILER_ID:MSVC>:VK_USE_PLATFORM_WIN32_KHR>)
 target_compile_features(svr PUBLIC cxx_std_20)
 target_compile_options(svr PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-W4 -WX>)
 

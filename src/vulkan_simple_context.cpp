@@ -35,6 +35,15 @@ vulkan_simple_context::vulkan_simple_context()
     enabled_layers_.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
+    // Enable instance extensions
+    enabled_instance_extensions_.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
+#ifdef WIN32
+    enabled_instance_extensions_.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#else
+#error Unsupported Vulkan platform.
+#endif
+
     // Verify required layers are available
     if (!has_required_layers(vk::enumerateInstanceLayerProperties(), enabled_layers_)) {
         throw std::runtime_error{"Required layers not found"};
@@ -49,6 +58,7 @@ vulkan_simple_context::vulkan_simple_context()
 
     // Create context
     create_instance();
+    create_surface();
 }
 
 void vulkan_simple_context::create_instance()
@@ -58,6 +68,18 @@ void vulkan_simple_context::create_instance()
         {{}, &application_info, enabled_layers_, enabled_instance_extensions_};
 
     instance_ = vk::createInstanceUnique(create_info);
+}
+
+void vulkan_simple_context::create_surface()
+{
+#ifdef WIN32
+    vk::Win32SurfaceCreateInfoKHR create_info = {
+        {},
+        GetModuleHandle(nullptr),
+        GetActiveWindow()};
+
+    surface_ = instance_->createWin32SurfaceKHRUnique(create_info);
+#endif
 }
 
 } // namespace svr

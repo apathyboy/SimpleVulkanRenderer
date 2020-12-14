@@ -10,7 +10,8 @@ namespace svr {
 
 class vulkan_simple_context {
     // Vulkan Handles
-    vk::UniqueInstance instance_;
+    vk::UniqueInstance   instance_;
+    vk::UniqueSurfaceKHR surface_;
 
     // Vulkan Configuration
     uint32_t                 min_vulkan_api_version_      = VK_API_VERSION_1_1;
@@ -23,6 +24,7 @@ public:
 private:
     // Handle Creators
     void create_instance();
+    void create_surface();
 };
 
 } // namespace svr
