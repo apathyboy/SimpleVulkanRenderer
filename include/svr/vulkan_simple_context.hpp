@@ -37,6 +37,10 @@ class vulkan_simple_context {
     vulkan_swapchain                     swapchain_ = {};
     vk::UniqueCommandPool                command_pool_;
     std::vector<vk::UniqueCommandBuffer> command_buffers_;
+    vk::UniqueSemaphore                  image_available_semaphore_;
+    vk::UniqueSemaphore                  rendering_complete_semaphore_;
+
+    uint32_t current_swapchain_idx_;
 
     // Vulkan Configuration
     uint32_t                   min_vulkan_api_version_      = VK_API_VERSION_1_1;
@@ -50,6 +54,9 @@ class vulkan_simple_context {
 public:
     vulkan_simple_context(uint32_t width, uint32_t height);
 
+    void begin_draw();
+    void end_draw();
+
 private:
     // Handle Creators
     void create_instance();
@@ -58,6 +65,7 @@ private:
     void create_swapchain();
     void create_command_pool();
     void create_command_buffers();
+    void create_synchronization();
 
     void select_physical_device();
 };

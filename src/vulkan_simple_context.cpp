@@ -138,6 +138,48 @@ vulkan_simple_context::vulkan_simple_context(uint32_t width, uint32_t height)
     create_swapchain();
     create_command_pool();
     create_command_buffers();
+    create_synchronization();
+}
+
+void vulkan_simple_context::begin_draw()
+{
+    auto [result, value] = device_->acquireNextImageKHR(
+        swapchain_.handle.get(),
+        UINT64_MAX,
+        image_available_semaphore_.get(),
+        nullptr);
+
+    if (result != vk::Result::eSuccess) {
+        throw std::runtime_error{"Unable to acquire swapchain image"};
+    }
+
+    current_swapchain_idx_ = value;
+}
+
+void vulkan_simple_context::end_draw()
+{
+    // Submit commands
+    vk::PipelineStageFlags wait_dst_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe;
+
+    vk::SubmitInfo submit_info = {
+        image_available_semaphore_.get(),
+        wait_dst_stage_mask,
+        command_buffers_[current_swapchain_idx_].get(),
+        rendering_complete_semaphore_.get()};
+
+    device_queue_.submit(submit_info, nullptr);
+
+    // Present image
+    vk::PresentInfoKHR present_info = {
+        rendering_complete_semaphore_.get(),
+        swapchain_.handle.get(),
+        current_swapchain_idx_};
+
+    if (device_queue_.presentKHR(present_info) != vk::Result::eSuccess) {
+        throw std::runtime_error{"Unable to present image"};
+    }
+
+    device_queue_.waitIdle();
 }
 
 void vulkan_simple_context::create_instance()
@@ -236,6 +278,12 @@ void vulkan_simple_context::create_command_buffers()
         static_cast<uint32_t>(swapchain_.images.size())};
 
     command_buffers_ = device_->allocateCommandBuffersUnique(alloc_info);
+}
+
+void vulkan_simple_context::create_synchronization()
+{
+    image_available_semaphore_    = device_->createSemaphoreUnique({});
+    rendering_complete_semaphore_ = device_->createSemaphoreUnique({});
 }
 
 void vulkan_simple_context::select_physical_device()
