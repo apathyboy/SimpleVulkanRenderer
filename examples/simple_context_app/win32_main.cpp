@@ -1,7 +1,7 @@
 
 #include <Windows.h>
 
-#include <svr/vulkan_simple_context.hpp>
+#include "color_renderer.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -15,7 +15,11 @@ bool is_minimized = false;
 int32_t client_area_width  = 1280;
 int32_t client_area_height = 720;
 
-std::unique_ptr<svr::vulkan_simple_context> context;
+std::unique_ptr<color_renderer> renderer;
+
+auto red   = std::array{1.f, 0.f, 0.f, 0.f};
+auto green = std::array{0.f, 1.f, 0.f, 0.f};
+auto blue  = std::array{0.f, 0.f, 1.f, 0.f};
 
 LRESULT CALLBACK
 window_proc(_In_ HWND hwnd, _In_ UINT msg, _In_ WPARAM wparam, _In_ LPARAM lparam);
@@ -70,15 +74,14 @@ int WINAPI WinMain(
     ShowWindow(hwnd, show_cmd);
 
     // application specific setup
-    context = std::make_unique<svr::vulkan_simple_context>(
-        client_area_width,
-        client_area_height);
+    renderer = std::make_unique<color_renderer>(client_area_width, client_area_height, red);
 
     while (is_running) {
         // update game/simulation
 
         if (!is_minimized) {
             // draw frame
+            renderer->draw();
         }
 
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -123,6 +126,15 @@ window_proc(_In_ HWND hwnd, _In_ UINT msg, _In_ WPARAM wparam, _In_ LPARAM lpara
             switch (wparam) {
                 case VK_ESCAPE: {
                     PostQuitMessage(0);
+                } break;
+                case 'R': {
+                    renderer->update_color(std::array{1.f, 0.f, 0.f, 0.f});
+                } break;
+                case 'G': {
+                    renderer->update_color(std::array{0.f, 1.f, 0.f, 0.f});
+                } break;
+                case 'B': {
+                    renderer->update_color(std::array{0.f, 0.f, 1.f, 0.f});
                 } break;
             }
         } break;

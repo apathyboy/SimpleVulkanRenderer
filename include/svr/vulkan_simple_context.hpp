@@ -57,6 +57,14 @@ public:
     void begin_draw();
     void end_draw();
 
+    vulkan_physical_device&               physical_device() { return physical_device_; }
+    vulkan_swapchain&                     swapchain() { return swapchain_; }
+    std::vector<vk::UniqueCommandBuffer>& command_buffers()
+    {
+        device_->resetCommandPool(command_pool_.get(), {});
+        return command_buffers_;
+    }
+
 private:
     // Handle Creators
     void create_instance();
