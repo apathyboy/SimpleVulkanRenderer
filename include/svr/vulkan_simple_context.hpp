@@ -29,12 +29,14 @@ struct vulkan_swapchain {
 
 class vulkan_simple_context {
     // Vulkan Handles
-    vk::UniqueInstance     instance_;
-    vk::UniqueSurfaceKHR   surface_;
-    vulkan_physical_device physical_device_ = {};
-    vk::UniqueDevice       device_;
-    vk::Queue              device_queue_;
-    vulkan_swapchain       swapchain_ = {};
+    vk::UniqueInstance                   instance_;
+    vk::UniqueSurfaceKHR                 surface_;
+    vulkan_physical_device               physical_device_ = {};
+    vk::UniqueDevice                     device_;
+    vk::Queue                            device_queue_;
+    vulkan_swapchain                     swapchain_ = {};
+    vk::UniqueCommandPool                command_pool_;
+    std::vector<vk::UniqueCommandBuffer> command_buffers_;
 
     // Vulkan Configuration
     uint32_t                   min_vulkan_api_version_      = VK_API_VERSION_1_1;
@@ -54,6 +56,8 @@ private:
     void create_surface();
     void create_logical_device();
     void create_swapchain();
+    void create_command_pool();
+    void create_command_buffers();
 
     void select_physical_device();
 };

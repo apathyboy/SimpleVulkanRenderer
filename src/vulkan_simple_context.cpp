@@ -136,6 +136,8 @@ vulkan_simple_context::vulkan_simple_context(uint32_t width, uint32_t height)
     select_physical_device();
     create_logical_device();
     create_swapchain();
+    create_command_pool();
+    create_command_buffers();
 }
 
 void vulkan_simple_context::create_instance()
@@ -217,6 +219,23 @@ void vulkan_simple_context::create_swapchain()
     swapchain_.handle = device_->createSwapchainKHRUnique(create_info);
 
     swapchain_.images = device_->getSwapchainImagesKHR(swapchain_.handle.get());
+}
+
+void vulkan_simple_context::create_command_pool()
+{
+    auto create_info = vk::CommandPoolCreateInfo{{}, physical_device_.queue_family_idx};
+
+    command_pool_ = device_->createCommandPoolUnique(create_info);
+}
+
+void vulkan_simple_context::create_command_buffers()
+{
+    vk::CommandBufferAllocateInfo alloc_info = {
+        command_pool_.get(),
+        vk::CommandBufferLevel::ePrimary,
+        static_cast<uint32_t>(swapchain_.images.size())};
+
+    command_buffers_ = device_->allocateCommandBuffersUnique(alloc_info);
 }
 
 void vulkan_simple_context::select_physical_device()
