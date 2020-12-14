@@ -46,7 +46,57 @@ uint32_t find_queue_family_idx(vk::PhysicalDevice device, vk::SurfaceKHR surface
     return queue_family_idx.value();
 }
 
-vulkan_simple_context::vulkan_simple_context()
+vk::SurfaceFormatKHR select_optimal_surface_format(std::vector<vk::SurfaceFormatKHR> available)
+{
+    vk::SurfaceFormatKHR optimal_format = {
+        vk::Format::eB8G8R8A8Srgb,
+        vk::ColorSpaceKHR::eSrgbNonlinear};
+
+    if (std::ranges::find(available, optimal_format) == available.end()) {
+        throw std::runtime_error{"Required surface format not supported"};
+    }
+
+    return optimal_format;
+}
+
+vk::PresentModeKHR select_optimal_present_mode(std::vector<vk::PresentModeKHR> available)
+{
+    vk::PresentModeKHR optimal_mode = vk::PresentModeKHR::eFifo;
+
+    if (std::ranges::find(available, optimal_mode) == available.end()) {
+        throw std::runtime_error{"Required presentation mode not found"};
+    }
+
+    return optimal_mode;
+}
+
+vk::Extent2D select_optimal_surface_extent(
+    vk::SurfaceCapabilitiesKHR capabilities,
+    uint32_t                   client_area_width,
+    uint32_t                   client_area_height)
+{
+    return {
+        std::clamp(
+            client_area_width,
+            capabilities.minImageExtent.width,
+            capabilities.maxImageExtent.width),
+        std::clamp(
+            client_area_height,
+            capabilities.minImageExtent.height,
+            capabilities.maxImageExtent.height)};
+}
+
+uint32_t select_swapchain_image_count(vk::SurfaceCapabilitiesKHR capabilities)
+{
+    return std::clamp(
+        capabilities.minImageCount + 1,
+        capabilities.minImageCount,
+        capabilities.maxImageCount);
+}
+
+vulkan_simple_context::vulkan_simple_context(uint32_t width, uint32_t height)
+    : client_area_width_{width}
+    , client_area_height_{height}
 {
     if (vk::enumerateInstanceVersion() < min_vulkan_api_version_) {
         throw std::runtime_error{"Min Vulkan API version not found"};
@@ -65,6 +115,9 @@ vulkan_simple_context::vulkan_simple_context()
 #error Unsupported Vulkan platform.
 #endif
 
+    // Enable device extensions
+    enabled_device_extensions_.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
     // Verify required layers are available
     if (!has_required_layers(vk::enumerateInstanceLayerProperties(), enabled_layers_)) {
         throw std::runtime_error{"Required layers not found"};
@@ -82,6 +135,7 @@ vulkan_simple_context::vulkan_simple_context()
     create_surface();
     select_physical_device();
     create_logical_device();
+    create_swapchain();
 }
 
 void vulkan_simple_context::create_instance()
@@ -118,6 +172,51 @@ void vulkan_simple_context::create_logical_device()
     device_ = physical_device_.handle.createDeviceUnique(create_info);
 
     device_queue_ = device_->getQueue(physical_device_.queue_family_idx, 0);
+}
+
+void vulkan_simple_context::create_swapchain()
+{
+    auto surface_capabilities = physical_device_.handle.getSurfaceCapabilitiesKHR(
+        surface_.get());
+
+    swapchain_.surface = surface_.get();
+
+    swapchain_.min_image_count = select_swapchain_image_count(surface_capabilities);
+
+    swapchain_.format = select_optimal_surface_format(
+        physical_device_.handle.getSurfaceFormatsKHR(swapchain_.surface));
+
+    swapchain_.extent = select_optimal_surface_extent(
+        surface_capabilities,
+        client_area_width_,
+        client_area_height_);
+
+    swapchain_.image_usage = vk::ImageUsageFlagBits::eColorAttachment
+                             | vk::ImageUsageFlagBits::eTransferDst;
+
+    swapchain_.present_mode = select_optimal_present_mode(
+        physical_device_.handle.getSurfacePresentModesKHR(swapchain_.surface));
+
+    vk::SwapchainCreateInfoKHR create_info = vk::SwapchainCreateInfoKHR(
+        {},
+        swapchain_.surface,
+        swapchain_.min_image_count,
+        swapchain_.format.format,
+        swapchain_.format.colorSpace,
+        swapchain_.extent,
+        swapchain_.layer_count,
+        swapchain_.image_usage,
+        vk::SharingMode::eExclusive,
+        physical_device_.queue_family_idx,
+        surface_capabilities.currentTransform,
+        vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        swapchain_.present_mode,
+        swapchain_.clipped,
+        swapchain_.handle.get());
+
+    swapchain_.handle = device_->createSwapchainKHRUnique(create_info);
+
+    swapchain_.images = device_->getSwapchainImagesKHR(swapchain_.handle.get());
 }
 
 void vulkan_simple_context::select_physical_device()

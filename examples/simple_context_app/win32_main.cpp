@@ -70,7 +70,9 @@ int WINAPI WinMain(
     ShowWindow(hwnd, show_cmd);
 
     // application specific setup
-    context = std::make_unique<svr::vulkan_simple_context>();
+    context = std::make_unique<svr::vulkan_simple_context>(
+        client_area_width,
+        client_area_height);
 
     while (is_running) {
         // update game/simulation
